@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16
+    container_name: applied-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-applied}
+      POSTGRES_USER: ${POSTGRES_USER:-applied}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-applied}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - applied_pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./apps/api
+    container_name: applied-api
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql+psycopg://applied:applied@db:5432/applied
+      JWT_SECRET: change-me
+      JWT_ACCESS_TTL_MINUTES: 15
+      JWT_REFRESH_TTL_DAYS: 14
+      CORS_ORIGINS: http://localhost:5173,http://localhost:8080,http://localhost
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: ./apps/web
+    container_name: applied-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+    # If your frontend needs the API URL at build time, you can pass args.
+    # But easiest is to configure it in the frontend to use relative /api in prod
+    # and VITE_API_BASE_URL for dev.
+
+volumes:
+  applied_pgdata:
