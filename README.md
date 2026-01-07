@@ -154,6 +154,27 @@ http://localhost:8000/docs
 
 ---
 
+## Mental model (important)
+
+This is a **monorepo**. Different folders use different tools.
+
+Keep this shortcut in mind:
+
+```
+apps/web   → frontend (React / Vite)
+  npm run dev
+
+apps/api   → backend (FastAPI / Python)
+  uvicorn app.main:app --reload --port 8000
+
+repo root  → infrastructure (Docker)
+  docker compose up
+```
+
+If you see errors like `ENOENT package.json`, it usually means you ran an `npm` command outside `apps/web`.
+
+---
+
 ## Common Issues
 
 ### "npm run dev" fails with ENOENT
