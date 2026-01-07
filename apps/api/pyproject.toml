@@ -1,0 +1,14 @@
+[project]
+name = "applied-api"
+version = "0.1.0"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "sqlalchemy",
+  "psycopg[binary]",
+  "python-dotenv",
+  "alembic"
+]
+
+[tool.setuptools]
+packages = ["app"]
