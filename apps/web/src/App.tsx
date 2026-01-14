@@ -7,7 +7,10 @@ function App() {
   useEffect(() => {
     healthCheck()
       .then((data) => setStatus(data.status))
-      .catch(() => setStatus("error"));
+      .catch((err) => {
+        console.error(err);
+        setStatus(err.message ?? "error");
+      });
   }, []);
 
   return (
