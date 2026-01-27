@@ -4,6 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createApplication, listApplications } from "../shared/api/client";
 import { STATUSES } from "../shared/constants/statuses";
 
+function daysAgo(iso: string): number | null {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return null;
+  const diffMs = Date.now() - t;
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
 export default function ApplicationsPage() {
   const qc = useQueryClient();
   const { data, isLoading, error } = useQuery({
@@ -123,25 +131,50 @@ export default function ApplicationsPage() {
         ) : null}
 
         <div style={{ display: "grid", gap: 10 }}>
-          {(data ?? []).map((a) => (
-            <Link
-              key={a.id}
-              to={`/applications/${a.id}`}
-              style={{
-                display: "block",
-                padding: 12,
-                border: "1px solid #eee",
-                borderRadius: 8,
-                textDecoration: "none",
-                color: "inherit",
-              }}
-            >
-              <div style={{ fontWeight: 600 }}>
-                {a.company_name} · {a.role_title}
-              </div>
-              <div style={{ opacity: 0.8 }}>Status: {a.status}</div>
-            </Link>
-          ))}
+          {(data ?? []).map((a) => {
+            const d = daysAgo(a.updated_at);
+            const stale = d !== null && d >= 14;
+
+            return (
+              <Link
+                key={a.id}
+                to={`/applications/${a.id}`}
+                style={{
+                  display: "block",
+                  padding: 12,
+                  border: "1px solid #eee",
+                  borderRadius: 8,
+                  textDecoration: "none",
+                  color: "inherit",
+                }}
+              >
+                <div style={{ fontWeight: 600 }}>
+                  {a.company_name} · {a.role_title}
+                </div>
+                <div style={{ opacity: 0.8 }}>Status: {a.status}</div>
+
+                <div style={{ opacity: 0.75, fontSize: 14, marginTop: 4 }}>
+                  Last activity:{" "}
+                  {d === null
+                    ? "unknown"
+                    : d === 0
+                      ? "today"
+                      : `${d} day${d === 1 ? "" : "s"} ago`}
+                  {stale ? (
+                    <span
+                      style={{
+                        marginLeft: 10,
+                        color: "crimson",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Needs follow up
+                    </span>
+                  ) : null}
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </main>

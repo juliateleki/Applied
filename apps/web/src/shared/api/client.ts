@@ -25,6 +25,8 @@ export type Application = {
   company_name: string;
   role_title: string;
   status: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ApplicationEvent = {

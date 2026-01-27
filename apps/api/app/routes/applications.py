@@ -19,6 +19,8 @@ class ApplicationOut(BaseModel):
     company_name: str
     role_title: str
     status: str
+    created_at: str
+    updated_at: str
 
 class StatusChangeIn(BaseModel):
     to_status: str = Field(min_length=1, max_length=50)
@@ -36,7 +38,17 @@ class EventOut(BaseModel):
 def list_applications():
     with get_session() as db:
         rows = db.execute(select(Application).order_by(Application.updated_at.desc())).scalars().all()
-        return [ApplicationOut(id=a.id, company_name=a.company_name, role_title=a.role_title, status=a.status) for a in rows]
+        return [
+            ApplicationOut(
+                id=a.id,
+                company_name=a.company_name,
+                role_title=a.role_title,
+                status=a.status,
+                created_at=a.created_at.isoformat() if a.created_at else "",
+                updated_at=a.updated_at.isoformat() if a.updated_at else "",
+            )
+            for a in rows
+        ]
 
 @router.get("/{application_id}", response_model=ApplicationOut)
 def get_application(application_id: int):
@@ -44,8 +56,14 @@ def get_application(application_id: int):
         app = db.get(Application, application_id)
         if not app:
             raise HTTPException(status_code=404, detail="Application not found")
-        return ApplicationOut(id=app.id, company_name=app.company_name, role_title=app.role_title, status=app.status)
-
+        return ApplicationOut(
+            id=app.id,
+            company_name=app.company_name,
+            role_title=app.role_title,
+            status=app.status,
+            created_at=app.created_at.isoformat() if app.created_at else "",
+            updated_at=app.updated_at.isoformat() if app.updated_at else "",
+        )
 
 @router.post("", response_model=ApplicationOut)
 def create_application(payload: ApplicationCreate):
@@ -66,7 +84,14 @@ def create_application(payload: ApplicationCreate):
         )
         db.commit()
         db.refresh(app)
-        return ApplicationOut(id=app.id, company_name=app.company_name, role_title=app.role_title, status=app.status)
+        return ApplicationOut(
+            id=app.id,
+            company_name=app.company_name,
+            role_title=app.role_title,
+            status=app.status,
+            created_at=app.created_at.isoformat() if app.created_at else "",
+            updated_at=app.updated_at.isoformat() if app.updated_at else "",
+        )
 
 @router.post("/{application_id}/status", response_model=ApplicationOut)
 def change_status(application_id: int, payload: StatusChangeIn):
@@ -89,7 +114,14 @@ def change_status(application_id: int, payload: StatusChangeIn):
         )
         db.commit()
         db.refresh(app)
-        return ApplicationOut(id=app.id, company_name=app.company_name, role_title=app.role_title, status=app.status)
+        return ApplicationOut(
+            id=app.id,
+            company_name=app.company_name,
+            role_title=app.role_title,
+            status=app.status,
+            created_at=app.created_at.isoformat() if app.created_at else "",
+            updated_at=app.updated_at.isoformat() if app.updated_at else "",
+        )
 
 @router.get("/{application_id}/events", response_model=list[EventOut])
 def list_events(application_id: int):
