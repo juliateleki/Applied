@@ -214,6 +214,84 @@ docker compose up
 
 ---
 
+---
+
+## Docker & Alembic Workflow (Important)
+
+### Start services
+
+```bash
+docker compose up -d db
+docker compose up -d --build api
+docker compose up -d
+```
+
+---
+
+### Enter the API container
+
+You are inside the container if:
+
+- `pwd` → `/app`
+- `ls` shows `app`, `alembic`, `alembic.ini`
+
+Exit with:
+
+```bash
+exit
+```
+
+---
+
+### Run Alembic migrations (recommended)
+
+Always run Alembic **inside the API container**.
+
+```bash
+docker exec -it applied-api python -m alembic current
+docker exec -it applied-api python -m alembic upgrade head
+```
+
+---
+
+### Verify database state
+
+```bash
+docker exec -it applied-db psql -U applied -d applied -c "\dt"
+docker exec -it applied-db psql -U applied -d applied -c "\d applications"
+docker exec -it applied-db psql -U applied -d applied -c "\d application_events"
+```
+
+---
+
+### Reset everything (destructive)
+
+**Deletes all local DB data**
+
+```bash
+docker compose down -v
+docker compose up -d db
+docker compose up -d --build api
+docker exec -it applied-api python -m alembic upgrade head
+```
+
+---
+
+## Common Issues
+
+### npm ENOENT
+
+```bash
+cd apps/web
+npm run dev
+```
+
+### Node crypto errors
+
+```bash
+nvm use
+```
+
 ## Product Principles
 
 - Calm UX, no gamification
