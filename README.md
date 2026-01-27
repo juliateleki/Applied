@@ -58,6 +58,9 @@ You will need:
 - **Docker Desktop** (running)
 - **Python 3.11+** (for API development)
 
+---
+
+
 ### Node version (important)
 
 This project requires **Node 20 LTS**. Node 21 is not supported by Vite.
