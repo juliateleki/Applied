@@ -1,24 +1,12 @@
-import { useEffect, useState } from "react";
-import { healthCheck } from "./shared/api/client";
+import { Route, Routes } from "react-router-dom";
+import ApplicationsPage from "./pages/ApplicationsPage";
+import ApplicationDetailPage from "./pages/ApplicationDetailPage";
 
-function App() {
-  const [status, setStatus] = useState("loading...");
-
-  useEffect(() => {
-    healthCheck()
-      .then((data) => setStatus(data.status))
-      .catch((err) => {
-        console.error(err);
-        setStatus(err.message ?? "error");
-      });
-  }, []);
-
+export default function App() {
   return (
-    <main style={{ padding: 32 }}>
-      <h1>Applied</h1>
-      <p>API status: {status}</p>
-    </main>
+    <Routes>
+      <Route path="/" element={<ApplicationsPage />} />
+      <Route path="/applications/:id" element={<ApplicationDetailPage />} />
+    </Routes>
   );
 }
-
-export default App;

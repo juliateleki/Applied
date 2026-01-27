@@ -38,6 +38,15 @@ def list_applications():
         rows = db.execute(select(Application).order_by(Application.updated_at.desc())).scalars().all()
         return [ApplicationOut(id=a.id, company_name=a.company_name, role_title=a.role_title, status=a.status) for a in rows]
 
+@router.get("/{application_id}", response_model=ApplicationOut)
+def get_application(application_id: int):
+    with get_session() as db:
+        app = db.get(Application, application_id)
+        if not app:
+            raise HTTPException(status_code=404, detail="Application not found")
+        return ApplicationOut(id=app.id, company_name=app.company_name, role_title=app.role_title, status=app.status)
+
+
 @router.post("", response_model=ApplicationOut)
 def create_application(payload: ApplicationCreate):
     with get_session() as db:
