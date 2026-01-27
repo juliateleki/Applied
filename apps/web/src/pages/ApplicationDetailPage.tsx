@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { changeStatus, getApplication, listEvents } from "../shared/api/client";
+import { STATUSES } from "../shared/constants/statuses";
 
 export default function ApplicationDetailPage() {
   const { id } = useParams();
@@ -36,6 +37,12 @@ export default function ApplicationDetailPage() {
       ]);
     },
   });
+
+  const effectiveToStatus = toStatus || appQ.data?.status || "applied";
+  const canSave =
+    !!appQ.data &&
+    effectiveToStatus !== appQ.data.status &&
+    !statusMut.isPending;
 
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
@@ -72,11 +79,17 @@ export default function ApplicationDetailPage() {
             <div style={{ display: "grid", gap: 12 }}>
               <label>
                 To status
-                <input
-                  value={toStatus}
+                <select
+                  value={effectiveToStatus}
                   onChange={(e) => setToStatus(e.target.value)}
                   style={{ display: "block", width: "100%", padding: 8 }}
-                />
+                >
+                  {STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label>
@@ -96,11 +109,11 @@ export default function ApplicationDetailPage() {
               <button
                 onClick={() =>
                   statusMut.mutate({
-                    to_status: toStatus,
+                    to_status: effectiveToStatus,
                     note: note.trim() ? note : null,
                   })
                 }
-                disabled={!toStatus.trim() || statusMut.isPending}
+                disabled={!canSave}
                 style={{ padding: "10px 14px", cursor: "pointer" }}
               >
                 {statusMut.isPending ? "Saving…" : "Save status change"}
@@ -108,7 +121,7 @@ export default function ApplicationDetailPage() {
 
               {statusMut.error ? (
                 <p style={{ color: "crimson" }}>
-                  {String(statusMut.error.message ?? statusMut.error)}
+                  {String((statusMut.error as any)?.message ?? statusMut.error)}
                 </p>
               ) : null}
             </div>

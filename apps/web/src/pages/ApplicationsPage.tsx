@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createApplication, listApplications } from "../shared/api/client";
+import { STATUSES } from "../shared/constants/statuses";
 
 export default function ApplicationsPage() {
   const qc = useQueryClient();
@@ -61,11 +62,17 @@ export default function ApplicationsPage() {
 
           <label>
             Status
-            <input
+            <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               style={{ display: "block", width: "100%", padding: 8 }}
-            />
+            >
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label>
@@ -101,7 +108,7 @@ export default function ApplicationsPage() {
 
           {createMut.error ? (
             <p style={{ color: "crimson" }}>
-              {String(createMut.error.message ?? createMut.error)}
+              {String((createMut.error as any)?.message ?? createMut.error)}
             </p>
           ) : null}
         </div>
