@@ -214,8 +214,6 @@ docker compose up
 
 ---
 
----
-
 ## Docker & Alembic Workflow (Important)
 
 ### Start services
