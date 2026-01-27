@@ -6,23 +6,22 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# System deps (psycopg needs build tools sometimes)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential curl \
   && rm -rf /var/lib/apt/lists/*
 
-# Copy only dependency files first for better caching
+# Copy dependency metadata first
 COPY pyproject.toml ./
-# If you use a lockfile, copy it too (uncomment if you have one)
-# COPY uv.lock ./
-# COPY poetry.lock ./
 
-# Install dependencies
-# Assumes your pyproject supports pip editable install:
+# Copy the package code and alembic files so editable install can see them
+COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini ./
+
 RUN pip install --no-cache-dir -U pip \
  && pip install --no-cache-dir -e .
 
-# Now copy the actual app code
+# Now copy everything else (if you have extra files)
 COPY . .
 
 EXPOSE 8000
