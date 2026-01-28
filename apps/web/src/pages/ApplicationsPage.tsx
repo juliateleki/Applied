@@ -12,6 +12,14 @@ function daysAgo(iso: string): number | null {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
+function formatStatusLabel(value: string) {
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
 const STALE_DAYS = 14;
 
 export default function ApplicationsPage() {
@@ -56,64 +64,77 @@ export default function ApplicationsPage() {
   const staleCount = staleItems.length;
   const topStale = staleItems.slice(0, 3);
 
+  const cardStyle = {
+    padding: 16,
+    border: "1px solid #ddd",
+    borderRadius: 8,
+  } as const;
+
+  const fieldLabelStyle = {
+    display: "grid",
+    gap: 6,
+  } as const;
+
+  const inputStyle = {
+    display: "block",
+    width: "100%",
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #555",
+    background: "#3a3a3a",
+    color: "inherit",
+  } as const;
+
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-      <h1>Applied</h1>
+      <h1 style={{ marginTop: 0 }}>Applied</h1>
 
-      <section
-        style={{
-          marginTop: 24,
-          padding: 16,
-          border: "1px solid #ddd",
-          borderRadius: 8,
-        }}
-      >
+      <section style={{ marginTop: 24, ...cardStyle }}>
         <h2 style={{ marginTop: 0 }}>Create application</h2>
 
         <div style={{ display: "grid", gap: 12 }}>
-          <label>
-            Company
+          <label style={fieldLabelStyle}>
+            <span>Company</span>
             <input
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              style={{ display: "block", width: "100%", padding: 8 }}
+              style={inputStyle}
             />
           </label>
 
-          <label>
-            Role
+          <label style={fieldLabelStyle}>
+            <span>Role</span>
             <input
               value={roleTitle}
               onChange={(e) => setRoleTitle(e.target.value)}
-              style={{ display: "block", width: "100%", padding: 8 }}
+              style={inputStyle}
             />
           </label>
 
-          <label>
-            Status
+          <label style={fieldLabelStyle}>
+            <span>Status</span>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              style={{ display: "block", width: "100%", padding: 8 }}
+              style={inputStyle}
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {formatStatusLabel(s)}
                 </option>
               ))}
             </select>
           </label>
 
-          <label>
-            Note (optional)
+          <label style={fieldLabelStyle}>
+            <span>Note (optional)</span>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               style={{
-                display: "block",
-                width: "100%",
-                padding: 8,
-                minHeight: 80,
+                ...inputStyle,
+                minHeight: 110,
+                resize: "vertical",
               }}
             />
           </label>
@@ -130,13 +151,17 @@ export default function ApplicationsPage() {
             disabled={
               !companyName.trim() || !roleTitle.trim() || createMut.isPending
             }
-            style={{ padding: "10px 14px", cursor: "pointer" }}
+            style={{
+              padding: "12px 14px",
+              cursor: "pointer",
+              borderRadius: 10,
+            }}
           >
             {createMut.isPending ? "Creating..." : "Create"}
           </button>
 
           {createMut.error ? (
-            <p style={{ color: "crimson" }}>
+            <p style={{ color: "crimson", margin: 0 }}>
               {String((createMut.error as any)?.message ?? createMut.error)}
             </p>
           ) : null}
@@ -156,7 +181,7 @@ export default function ApplicationsPage() {
           Stale applications
         </h2>
 
-        {isLoading ? <p>Loading…</p> : null}
+        {isLoading ? <p style={{ textAlign: "center" }}>Loading…</p> : null}
         {error ? (
           <p style={{ color: "crimson", textAlign: "center" }}>
             {String((error as Error).message)}
@@ -165,37 +190,21 @@ export default function ApplicationsPage() {
 
         {!isLoading && !error ? (
           staleCount === 0 ? (
-            <p
-              style={{
-                margin: 0,
-                opacity: 0.8,
-                textAlign: "center",
-              }}
-            >
+            <p style={{ margin: 0, opacity: 0.85, textAlign: "center" }}>
               Nothing stale right now. You’re on top of it.
             </p>
           ) : (
             <>
-              <div
-                style={{
-                  textAlign: "center",
-                  marginBottom: 16,
-                }}
-              >
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
                 <div
-                  style={{
-                    fontSize: 32,
-                    fontWeight: 700,
-                    color: "crimson",
-                  }}
+                  style={{ fontSize: 32, fontWeight: 700, color: "crimson" }}
                 >
                   {staleCount}
                 </div>
-                <div style={{ opacity: 0.85 }}>
+                <div style={{ opacity: 0.9 }}>
                   {staleCount === 1 ? "application needs" : "applications need"}{" "}
-                  follow-up
+                  follow-up{" "}
                   <span style={{ opacity: 0.7 }}>
-                    {" "}
                     ({STALE_DAYS}+ days inactive)
                   </span>
                 </div>
@@ -211,7 +220,7 @@ export default function ApplicationsPage() {
                       justifyContent: "space-between",
                       alignItems: "center",
                       padding: 12,
-                      borderRadius: 8,
+                      borderRadius: 10,
                       background: "#2a2a2a",
                       textDecoration: "none",
                       color: "inherit",
@@ -219,18 +228,18 @@ export default function ApplicationsPage() {
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 600 }}>
+                      <div style={{ fontWeight: 700 }}>
                         {a.company_name} · {a.role_title}
                       </div>
-                      <div style={{ opacity: 0.7, fontSize: 14 }}>
-                        Status: {a.status}
+                      <div style={{ opacity: 0.8, fontSize: 14 }}>
+                        Status: {formatStatusLabel(a.status)}
                       </div>
                     </div>
 
                     <div
                       style={{
                         color: "crimson",
-                        fontWeight: 700,
+                        fontWeight: 800,
                         fontSize: 14,
                       }}
                     >
@@ -245,7 +254,7 @@ export default function ApplicationsPage() {
                   style={{
                     marginTop: 12,
                     marginBottom: 0,
-                    opacity: 0.6,
+                    opacity: 0.7,
                     textAlign: "center",
                     fontSize: 14,
                   }}
@@ -279,15 +288,17 @@ export default function ApplicationsPage() {
                   display: "block",
                   padding: 12,
                   border: "1px solid #eee",
-                  borderRadius: 8,
+                  borderRadius: 10,
                   textDecoration: "none",
                   color: "inherit",
                 }}
               >
-                <div style={{ fontWeight: 600 }}>
+                <div style={{ fontWeight: 700 }}>
                   {a.company_name} · {a.role_title}
                 </div>
-                <div style={{ opacity: 0.8 }}>Status: {a.status}</div>
+                <div style={{ opacity: 0.85 }}>
+                  Status: {formatStatusLabel(a.status)}
+                </div>
 
                 <div style={{ opacity: 0.75, fontSize: 14, marginTop: 4 }}>
                   Last activity:{" "}
@@ -301,7 +312,7 @@ export default function ApplicationsPage() {
                       style={{
                         marginLeft: 10,
                         color: "crimson",
-                        fontWeight: 600,
+                        fontWeight: 700,
                       }}
                     >
                       Needs follow up
