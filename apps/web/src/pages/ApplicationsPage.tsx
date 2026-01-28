@@ -146,37 +146,62 @@ export default function ApplicationsPage() {
       <section
         style={{
           marginTop: 24,
-          padding: 16,
-          border: "1px solid #eee",
-          borderRadius: 8,
-          background: "#fafafa",
+          padding: 20,
+          borderRadius: 12,
+          background: "#1f1f1f",
+          border: "1px solid #333",
         }}
       >
-        <h2 style={{ marginTop: 0 }}>Stale applications</h2>
+        <h2 style={{ marginTop: 0, textAlign: "center" }}>
+          Stale applications
+        </h2>
 
         {isLoading ? <p>Loading…</p> : null}
         {error ? (
-          <p style={{ color: "crimson" }}>{String((error as Error).message)}</p>
+          <p style={{ color: "crimson", textAlign: "center" }}>
+            {String((error as Error).message)}
+          </p>
         ) : null}
 
         {!isLoading && !error ? (
           staleCount === 0 ? (
-            <p style={{ margin: 0, opacity: 0.8 }}>
+            <p
+              style={{
+                margin: 0,
+                opacity: 0.8,
+                textAlign: "center",
+              }}
+            >
               Nothing stale right now. You’re on top of it.
             </p>
           ) : (
             <>
-              <p style={{ marginTop: 0, marginBottom: 10 }}>
-                <span style={{ fontWeight: 700 }}>{staleCount}</span>{" "}
-                {staleCount === 1 ? "application" : "applications"}{" "}
-                {staleCount === 1 ? "is" : "are"} stale
-                <span style={{ opacity: 0.75 }}>
-                  {" "}
-                  (no activity in {STALE_DAYS}+ days)
-                </span>
-              </p>
+              <div
+                style={{
+                  textAlign: "center",
+                  marginBottom: 16,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 32,
+                    fontWeight: 700,
+                    color: "crimson",
+                  }}
+                >
+                  {staleCount}
+                </div>
+                <div style={{ opacity: 0.85 }}>
+                  {staleCount === 1 ? "application needs" : "applications need"}{" "}
+                  follow-up
+                  <span style={{ opacity: 0.7 }}>
+                    {" "}
+                    ({STALE_DAYS}+ days inactive)
+                  </span>
+                </div>
+              </div>
 
-              <div style={{ display: "grid", gap: 8 }}>
+              <div style={{ display: "grid", gap: 10 }}>
                 {topStale.map(({ a, d }) => (
                   <Link
                     key={a.id}
@@ -185,23 +210,30 @@ export default function ApplicationsPage() {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      padding: 10,
-                      border: "1px solid #eee",
+                      padding: 12,
                       borderRadius: 8,
+                      background: "#2a2a2a",
                       textDecoration: "none",
                       color: "inherit",
-                      background: "white",
+                      border: "1px solid #333",
                     }}
                   >
                     <div>
                       <div style={{ fontWeight: 600 }}>
                         {a.company_name} · {a.role_title}
                       </div>
-                      <div style={{ opacity: 0.75, fontSize: 14 }}>
+                      <div style={{ opacity: 0.7, fontSize: 14 }}>
                         Status: {a.status}
                       </div>
                     </div>
-                    <div style={{ color: "crimson", fontWeight: 700 }}>
+
+                    <div
+                      style={{
+                        color: "crimson",
+                        fontWeight: 700,
+                        fontSize: 14,
+                      }}
+                    >
                       {d}d
                     </div>
                   </Link>
@@ -209,9 +241,16 @@ export default function ApplicationsPage() {
               </div>
 
               {staleCount > topStale.length ? (
-                <p style={{ marginTop: 10, marginBottom: 0, opacity: 0.75 }}>
-                  Showing top {topStale.length}. Scroll the list below to see
-                  the rest.
+                <p
+                  style={{
+                    marginTop: 12,
+                    marginBottom: 0,
+                    opacity: 0.6,
+                    textAlign: "center",
+                    fontSize: 14,
+                  }}
+                >
+                  Showing {topStale.length} of {staleCount}
                 </p>
               ) : null}
             </>
