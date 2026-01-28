@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createApplication, listApplications } from "../shared/api/client";
@@ -11,6 +11,8 @@ function daysAgo(iso: string): number | null {
   const diffMs = Date.now() - t;
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
+
+const STALE_DAYS = 14;
 
 export default function ApplicationsPage() {
   const qc = useQueryClient();
@@ -34,6 +36,25 @@ export default function ApplicationsPage() {
       await qc.invalidateQueries({ queryKey: ["applications"] });
     },
   });
+
+  const staleItems = useMemo(() => {
+    const rows = data ?? [];
+    const withDays = rows
+      .map((a) => {
+        const d = daysAgo(a.updated_at);
+        return { a, d };
+      })
+      .filter((x) => x.d !== null && x.d >= STALE_DAYS) as Array<{
+      a: (typeof rows)[number];
+      d: number;
+    }>;
+
+    withDays.sort((x, y) => y.d - x.d);
+    return withDays;
+  }, [data]);
+
+  const staleCount = staleItems.length;
+  const topStale = staleItems.slice(0, 3);
 
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
@@ -122,6 +143,82 @@ export default function ApplicationsPage() {
         </div>
       </section>
 
+      <section
+        style={{
+          marginTop: 24,
+          padding: 16,
+          border: "1px solid #eee",
+          borderRadius: 8,
+          background: "#fafafa",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Stale applications</h2>
+
+        {isLoading ? <p>Loading…</p> : null}
+        {error ? (
+          <p style={{ color: "crimson" }}>{String((error as Error).message)}</p>
+        ) : null}
+
+        {!isLoading && !error ? (
+          staleCount === 0 ? (
+            <p style={{ margin: 0, opacity: 0.8 }}>
+              Nothing stale right now. You’re on top of it.
+            </p>
+          ) : (
+            <>
+              <p style={{ marginTop: 0, marginBottom: 10 }}>
+                <span style={{ fontWeight: 700 }}>{staleCount}</span>{" "}
+                {staleCount === 1 ? "application" : "applications"}{" "}
+                {staleCount === 1 ? "is" : "are"} stale
+                <span style={{ opacity: 0.75 }}>
+                  {" "}
+                  (no activity in {STALE_DAYS}+ days)
+                </span>
+              </p>
+
+              <div style={{ display: "grid", gap: 8 }}>
+                {topStale.map(({ a, d }) => (
+                  <Link
+                    key={a.id}
+                    to={`/applications/${a.id}`}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: 10,
+                      border: "1px solid #eee",
+                      borderRadius: 8,
+                      textDecoration: "none",
+                      color: "inherit",
+                      background: "white",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600 }}>
+                        {a.company_name} · {a.role_title}
+                      </div>
+                      <div style={{ opacity: 0.75, fontSize: 14 }}>
+                        Status: {a.status}
+                      </div>
+                    </div>
+                    <div style={{ color: "crimson", fontWeight: 700 }}>
+                      {d}d
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {staleCount > topStale.length ? (
+                <p style={{ marginTop: 10, marginBottom: 0, opacity: 0.75 }}>
+                  Showing top {topStale.length}. Scroll the list below to see
+                  the rest.
+                </p>
+              ) : null}
+            </>
+          )
+        ) : null}
+      </section>
+
       <section style={{ marginTop: 24 }}>
         <h2>Applications</h2>
 
@@ -133,7 +230,7 @@ export default function ApplicationsPage() {
         <div style={{ display: "grid", gap: 10 }}>
           {(data ?? []).map((a) => {
             const d = daysAgo(a.updated_at);
-            const stale = d !== null && d >= 14;
+            const stale = d !== null && d >= STALE_DAYS;
 
             return (
               <Link
