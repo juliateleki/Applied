@@ -4,6 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { changeStatus, getApplication, listEvents } from "../shared/api/client";
 import { STATUSES } from "../shared/constants/statuses";
 
+function formatStatusLabel(value: string) {
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
 export default function ApplicationDetailPage() {
   const { id } = useParams();
   const applicationId = useMemo(() => Number(id), [id]);
@@ -44,9 +52,25 @@ export default function ApplicationDetailPage() {
     effectiveToStatus !== appQ.data.status &&
     !statusMut.isPending;
 
+  const fieldLabelStyle = {
+    display: "grid",
+    gap: 6,
+  } as const;
+
+  const inputStyle = {
+    display: "block",
+    width: "100%",
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #555",
+    background: "#3a3a3a",
+    color: "inherit",
+    boxSizing: "border-box",
+  } as const;
+
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-      <p>
+      <p style={{ marginTop: 0 }}>
         <Link to="/">← Back</Link>
       </p>
 
@@ -59,49 +83,74 @@ export default function ApplicationDetailPage() {
 
       {appQ.data ? (
         <>
-          <h1 style={{ marginBottom: 6 }}>
+          <h1 style={{ marginBottom: 6, marginTop: 0 }}>
             {appQ.data.company_name} · {appQ.data.role_title}
           </h1>
-          <p style={{ marginTop: 0, opacity: 0.8 }}>
-            Current status: {appQ.data.status}
+
+          <p style={{ marginTop: 0, opacity: 0.85 }}>
+            Current status: {formatStatusLabel(appQ.data.status)}
           </p>
+
+          {appQ.data.job_url ? (
+            <p style={{ marginTop: 10 }}>
+              <a href={appQ.data.job_url} target="_blank" rel="noreferrer">
+                View job posting
+              </a>
+            </p>
+          ) : null}
+
+          {appQ.data.job_description ? (
+            <section
+              style={{
+                marginTop: 14,
+                padding: 16,
+                border: "1px solid #333",
+                borderRadius: 10,
+                background: "#1f1f1f",
+              }}
+            >
+              <h2 style={{ marginTop: 0 }}>Job description</h2>
+              <div style={{ whiteSpace: "pre-wrap", opacity: 0.95 }}>
+                {appQ.data.job_description}
+              </div>
+            </section>
+          ) : null}
 
           <section
             style={{
               marginTop: 18,
               padding: 16,
               border: "1px solid #ddd",
-              borderRadius: 8,
+              borderRadius: 10,
             }}
           >
             <h2 style={{ marginTop: 0 }}>Change status</h2>
 
             <div style={{ display: "grid", gap: 12 }}>
-              <label>
-                To status
+              <label style={fieldLabelStyle}>
+                <span>To status</span>
                 <select
                   value={effectiveToStatus}
                   onChange={(e) => setToStatus(e.target.value)}
-                  style={{ display: "block", width: "100%", padding: 8 }}
+                  style={inputStyle}
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>
-                      {s}
+                      {formatStatusLabel(s)}
                     </option>
                   ))}
                 </select>
               </label>
 
-              <label>
-                Note (optional)
+              <label style={fieldLabelStyle}>
+                <span>Note (optional)</span>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   style={{
-                    display: "block",
-                    width: "100%",
-                    padding: 8,
-                    minHeight: 80,
+                    ...inputStyle,
+                    minHeight: 110,
+                    resize: "vertical",
                   }}
                 />
               </label>
@@ -114,13 +163,17 @@ export default function ApplicationDetailPage() {
                   })
                 }
                 disabled={!canSave}
-                style={{ padding: "10px 14px", cursor: "pointer" }}
+                style={{
+                  padding: "12px 14px",
+                  cursor: "pointer",
+                  borderRadius: 10,
+                }}
               >
                 {statusMut.isPending ? "Saving…" : "Save status change"}
               </button>
 
               {statusMut.error ? (
-                <p style={{ color: "crimson" }}>
+                <p style={{ color: "crimson", margin: 0 }}>
                   {String((statusMut.error as any)?.message ?? statusMut.error)}
                 </p>
               ) : null}
@@ -144,15 +197,18 @@ export default function ApplicationDetailPage() {
                   style={{
                     padding: 12,
                     border: "1px solid #eee",
-                    borderRadius: 8,
+                    borderRadius: 10,
                   }}
                 >
-                  <div style={{ fontWeight: 600 }}>
-                    {e.event_type}
+                  <div style={{ fontWeight: 700 }}>
+                    {formatStatusLabel(e.event_type)}
                     {e.from_status || e.to_status ? (
                       <span style={{ fontWeight: 400, opacity: 0.8 }}>
                         {" "}
-                        {e.from_status ?? "∅"} → {e.to_status ?? "∅"}
+                        {e.from_status
+                          ? formatStatusLabel(e.from_status)
+                          : "∅"}{" "}
+                        → {e.to_status ? formatStatusLabel(e.to_status) : "∅"}
                       </span>
                     ) : null}
                   </div>

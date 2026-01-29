@@ -34,6 +34,9 @@ export default function ApplicationsPage() {
   const [status, setStatus] = useState("applied");
   const [note, setNote] = useState("");
 
+  const [jobUrl, setJobUrl] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
+
   const createMut = useMutation({
     mutationFn: createApplication,
     onSuccess: async () => {
@@ -41,6 +44,8 @@ export default function ApplicationsPage() {
       setRoleTitle("");
       setStatus("applied");
       setNote("");
+      setJobUrl("");
+      setJobDescription("");
       await qc.invalidateQueries({ queryKey: ["applications"] });
     },
   });
@@ -83,6 +88,7 @@ export default function ApplicationsPage() {
     border: "1px solid #555",
     background: "#3a3a3a",
     color: "inherit",
+    boxSizing: "border-box",
   } as const;
 
   return (
@@ -108,6 +114,31 @@ export default function ApplicationsPage() {
               value={roleTitle}
               onChange={(e) => setRoleTitle(e.target.value)}
               style={inputStyle}
+            />
+          </label>
+
+          <label style={fieldLabelStyle}>
+            <span>Job posting link (optional)</span>
+            <input
+              type="url"
+              value={jobUrl}
+              onChange={(e) => setJobUrl(e.target.value)}
+              placeholder="https://..."
+              style={inputStyle}
+            />
+          </label>
+
+          <label style={fieldLabelStyle}>
+            <span>Job description (optional)</span>
+            <textarea
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              style={{
+                ...inputStyle,
+                minHeight: 150,
+                resize: "vertical",
+              }}
+              placeholder="Paste the posting here so you can reference it later."
             />
           </label>
 
@@ -146,6 +177,8 @@ export default function ApplicationsPage() {
                 role_title: roleTitle,
                 status,
                 note: note.trim() ? note : null,
+                job_url: jobUrl.trim() ? jobUrl.trim() : null,
+                job_description: jobDescription.trim() ? jobDescription : null,
               })
             }
             disabled={
@@ -319,6 +352,15 @@ export default function ApplicationsPage() {
                     </span>
                   ) : null}
                 </div>
+
+                {a.job_url ? (
+                  <div style={{ marginTop: 6, fontSize: 14, opacity: 0.85 }}>
+                    Job link:{" "}
+                    <span style={{ textDecoration: "underline" }}>
+                      {a.job_url}
+                    </span>
+                  </div>
+                ) : null}
               </Link>
             );
           })}

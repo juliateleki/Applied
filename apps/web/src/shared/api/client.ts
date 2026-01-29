@@ -27,6 +27,9 @@ export type Application = {
   status: string;
   created_at: string;
   updated_at: string;
+
+  job_url: string | null;
+  job_description: string | null;
 };
 
 export type ApplicationEvent = {
@@ -55,6 +58,9 @@ export function createApplication(payload: {
   role_title: string;
   status?: string;
   note?: string | null;
+
+  job_url?: string | null;
+  job_description?: string | null;
 }) {
   return request<Application>("/applications", {
     method: "POST",
