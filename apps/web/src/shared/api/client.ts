@@ -12,9 +12,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(
-      `API error ${res.status} at ${url}${text ? `: ${text}` : ""}`,
-    );
+    throw new Error(`API error ${res.status}: ${text}`);
   }
 
   return (await res.json()) as T;
@@ -25,25 +23,12 @@ export type Application = {
   company_name: string;
   role_title: string;
   status: string;
+  applied_at: string;
   created_at: string;
   updated_at: string;
-
   job_url: string | null;
   job_description: string | null;
 };
-
-export type ApplicationEvent = {
-  id: number;
-  event_type: string;
-  from_status: string | null;
-  to_status: string | null;
-  note: string | null;
-  occurred_at: string;
-};
-
-export function healthCheck() {
-  return request<{ status: string }>("/health");
-}
 
 export function listApplications() {
   return request<Application[]>("/applications");
@@ -56,11 +41,11 @@ export function getApplication(id: number) {
 export function createApplication(payload: {
   company_name: string;
   role_title: string;
-  status?: string;
-  note?: string | null;
-
+  status: string;
+  applied_at: string;
   job_url?: string | null;
   job_description?: string | null;
+  note?: string | null;
 }) {
   return request<Application>("/applications", {
     method: "POST",
@@ -68,16 +53,16 @@ export function createApplication(payload: {
   });
 }
 
-export function changeStatus(
+export function updateApplication(
   id: number,
-  payload: { to_status: string; note?: string | null },
+  payload: Partial<Omit<Application, "id" | "created_at" | "updated_at">>,
 ) {
-  return request<Application>(`/applications/${id}/status`, {
-    method: "POST",
+  return request<Application>(`/applications/${id}`, {
+    method: "PATCH",
     body: JSON.stringify(payload),
   });
 }
 
 export function listEvents(id: number) {
-  return request<ApplicationEvent[]>(`/applications/${id}/events`);
+  return request(`/applications/${id}/events`);
 }
