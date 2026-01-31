@@ -59,6 +59,13 @@ class EventOut(BaseModel):
     note: str | None
     occurred_at: str
 
+class ApplicationUpdate(BaseModel):
+    company_name: str | None = Field(default=None, max_length=200)
+    role_title: str | None = Field(default=None, max_length=200)
+    job_url: str | None = Field(default=None, max_length=1000)
+    job_description: str | None = Field(default=None, max_length=20000)
+    applied_at: str | None = None
+    
 
 def to_out(a: Application) -> ApplicationOut:
     return ApplicationOut(
