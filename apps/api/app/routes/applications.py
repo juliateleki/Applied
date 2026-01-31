@@ -65,7 +65,7 @@ class ApplicationUpdate(BaseModel):
     job_url: str | None = Field(default=None, max_length=1000)
     job_description: str | None = Field(default=None, max_length=20000)
     applied_at: str | None = None
-    
+
 
 def to_out(a: Application) -> ApplicationOut:
     return ApplicationOut(
@@ -182,3 +182,29 @@ def list_events(application_id: int):
             )
             for e in events
         ]
+
+@router.patch("/{application_id}", response_model=ApplicationOut)
+def update_application(application_id: int, payload: ApplicationUpdate):
+    with get_session() as db:
+        app = db.get(Application, application_id)
+        if not app:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        if payload.company_name is not None:
+            app.company_name = payload.company_name.strip()
+
+        if payload.role_title is not None:
+            app.role_title = payload.role_title.strip()
+
+        if payload.job_url is not None:
+            app.job_url = payload.job_url.strip() or None
+
+        if payload.job_description is not None:
+            app.job_description = payload.job_description.strip() or None
+
+        if payload.applied_at is not None:
+            app.applied_at = date.fromisoformat(payload.applied_at)
+
+        db.commit()
+        db.refresh(app)
+        return to_out(app)
