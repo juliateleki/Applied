@@ -30,6 +30,15 @@ export type Application = {
   job_description: string | null;
 };
 
+export type ApplicationEvent = {
+  id: number;
+  event_type: string;
+  from_status: string | null;
+  to_status: string | null;
+  note: string | null;
+  occurred_at: string;
+};
+
 export function listApplications() {
   return request<Application[]>("/applications");
 }
@@ -67,4 +76,18 @@ export function updateApplication(
     method: "PATCH",
     body: JSON.stringify(payload),
   });
+}
+
+export function changeStatus(
+  id: number,
+  payload: { to_status: string; note?: string | null },
+) {
+  return request<Application>(`/applications/${id}/status`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listEvents(id: number) {
+  return request<ApplicationEvent[]>(`/applications/${id}/events`);
 }
