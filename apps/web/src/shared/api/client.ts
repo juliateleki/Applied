@@ -55,14 +55,16 @@ export function createApplication(payload: {
 
 export function updateApplication(
   id: number,
-  payload: Partial<Omit<Application, "id" | "created_at" | "updated_at">>,
+  payload: {
+    company_name?: string;
+    role_title?: string;
+    job_url?: string | null;
+    job_description?: string | null;
+    applied_at?: string;
+  },
 ) {
   return request<Application>(`/applications/${id}`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   });
-}
-
-export function listEvents(id: number) {
-  return request(`/applications/${id}/events`);
 }
