@@ -16,15 +16,15 @@ Job searching is often treated as a numbers game, but outcomes depend heavily on
 
 - React + TypeScript (Vite)
 - TanStack Query
-- React Hook Form + Zod
-- Recharts
+- React Hook Form + Zod (planned)
+- Recharts (planned)
 
 **Backend**
 
 - FastAPI (Python)
 - SQLAlchemy + Alembic
 - PostgreSQL
-- JWT authentication
+- JWT authentication (planned)
 
 **Infrastructure**
 
@@ -59,7 +59,6 @@ You will need:
 - **Python 3.11+** (for API development)
 
 ---
-
 
 ### Node version (important)
 
