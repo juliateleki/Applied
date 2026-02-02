@@ -1,7 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { changeStatus, getApplication, listEvents } from "../shared/api/client";
+import {
+  changeStatus,
+  getApplication,
+  listEvents,
+  updateApplication,
+} from "../shared/api/client";
 import { STATUSES } from "../shared/constants/statuses";
 
 function formatStatusLabel(value: string) {
@@ -47,7 +52,7 @@ export default function ApplicationDetailPage() {
   });
 
   const effectiveToStatus = toStatus || appQ.data?.status || "applied";
-  const canSave =
+  const canSaveStatus =
     !!appQ.data &&
     effectiveToStatus !== appQ.data.status &&
     !statusMut.isPending;
@@ -68,6 +73,51 @@ export default function ApplicationDetailPage() {
     boxSizing: "border-box",
   } as const;
 
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [editCompanyName, setEditCompanyName] = useState("");
+  const [editRoleTitle, setEditRoleTitle] = useState("");
+  const [editJobUrl, setEditJobUrl] = useState("");
+  const [editJobDescription, setEditJobDescription] = useState("");
+  const [editAppliedAt, setEditAppliedAt] = useState("");
+
+  useEffect(() => {
+    if (!appQ.data) return;
+    setEditCompanyName(appQ.data.company_name ?? "");
+    setEditRoleTitle(appQ.data.role_title ?? "");
+    setEditJobUrl(appQ.data.job_url ?? "");
+    setEditJobDescription(appQ.data.job_description ?? "");
+    setEditAppliedAt(appQ.data.applied_at ?? "");
+  }, [appQ.data]);
+
+  const editMut = useMutation({
+    mutationFn: (payload: {
+      company_name?: string;
+      role_title?: string;
+      job_url?: string | null;
+      job_description?: string | null;
+      applied_at?: string;
+    }) => updateApplication(applicationId, payload),
+    onSuccess: async () => {
+      setIsEditing(false);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["application", applicationId] }),
+        qc.invalidateQueries({ queryKey: ["applications"] }),
+      ]);
+    },
+  });
+
+  const canSaveEdit =
+    !!appQ.data &&
+    !editMut.isPending &&
+    !!editCompanyName.trim() &&
+    !!editRoleTitle.trim() &&
+    (editCompanyName.trim() !== appQ.data.company_name ||
+      editRoleTitle.trim() !== appQ.data.role_title ||
+      (editJobUrl.trim() || "") !== (appQ.data.job_url || "") ||
+      (editJobDescription || "") !== (appQ.data.job_description || "") ||
+      (editAppliedAt || "") !== (appQ.data.applied_at || ""));
+
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
       <p style={{ marginTop: 0 }}>
@@ -83,13 +133,148 @@ export default function ApplicationDetailPage() {
 
       {appQ.data ? (
         <>
-          <h1 style={{ marginBottom: 6, marginTop: 0 }}>
-            {appQ.data.company_name} · {appQ.data.role_title}
-          </h1>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 12,
+            }}
+          >
+            <div>
+              <h1 style={{ marginBottom: 6, marginTop: 0 }}>
+                {appQ.data.company_name} · {appQ.data.role_title}
+              </h1>
 
-          <p style={{ marginTop: 0, opacity: 0.85 }}>
-            Current status: {formatStatusLabel(appQ.data.status)}
-          </p>
+              <p style={{ marginTop: 0, opacity: 0.85 }}>
+                Current status: {formatStatusLabel(appQ.data.status)}
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => {
+                  if (!isEditing) {
+                    setIsEditing(true);
+                    return;
+                  }
+                  setIsEditing(false);
+                  setEditCompanyName(appQ.data.company_name ?? "");
+                  setEditRoleTitle(appQ.data.role_title ?? "");
+                  setEditJobUrl(appQ.data.job_url ?? "");
+                  setEditJobDescription(appQ.data.job_description ?? "");
+                  setEditAppliedAt(appQ.data.applied_at ?? "");
+                }}
+                style={{
+                  padding: "10px 12px",
+                  cursor: "pointer",
+                  borderRadius: 10,
+                }}
+              >
+                {isEditing ? "Cancel" : "Edit"}
+              </button>
+
+              {isEditing ? (
+                <button
+                  onClick={() =>
+                    editMut.mutate({
+                      company_name: editCompanyName.trim(),
+                      role_title: editRoleTitle.trim(),
+                      job_url: editJobUrl.trim() ? editJobUrl.trim() : null,
+                      job_description: editJobDescription.trim()
+                        ? editJobDescription
+                        : null,
+                      applied_at: editAppliedAt || undefined,
+                    })
+                  }
+                  disabled={!canSaveEdit}
+                  style={{
+                    padding: "10px 12px",
+                    cursor: "pointer",
+                    borderRadius: 10,
+                    opacity: canSaveEdit ? 1 : 0.6,
+                  }}
+                >
+                  {editMut.isPending ? "Saving…" : "Save edits"}
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          {editMut.error ? (
+            <p style={{ color: "crimson", marginTop: 10 }}>
+              {String((editMut.error as any)?.message ?? editMut.error)}
+            </p>
+          ) : null}
+
+          {isEditing ? (
+            <section
+              style={{
+                marginTop: 14,
+                padding: 16,
+                border: "1px solid #333",
+                borderRadius: 10,
+                background: "#1f1f1f",
+              }}
+            >
+              <h2 style={{ marginTop: 0 }}>Edit application</h2>
+
+              <div style={{ display: "grid", gap: 12 }}>
+                <label style={fieldLabelStyle}>
+                  <span>Company</span>
+                  <input
+                    value={editCompanyName}
+                    onChange={(e) => setEditCompanyName(e.target.value)}
+                    style={inputStyle}
+                  />
+                </label>
+
+                <label style={fieldLabelStyle}>
+                  <span>Role</span>
+                  <input
+                    value={editRoleTitle}
+                    onChange={(e) => setEditRoleTitle(e.target.value)}
+                    style={inputStyle}
+                  />
+                </label>
+
+                <label style={fieldLabelStyle}>
+                  <span>Applied date</span>
+                  <input
+                    type="date"
+                    value={editAppliedAt || ""}
+                    onChange={(e) => setEditAppliedAt(e.target.value)}
+                    style={inputStyle}
+                  />
+                </label>
+
+                <label style={fieldLabelStyle}>
+                  <span>Job posting link (optional)</span>
+                  <input
+                    type="url"
+                    value={editJobUrl}
+                    onChange={(e) => setEditJobUrl(e.target.value)}
+                    placeholder="https://..."
+                    style={inputStyle}
+                  />
+                </label>
+
+                <label style={fieldLabelStyle}>
+                  <span>Job description (optional)</span>
+                  <textarea
+                    value={editJobDescription}
+                    onChange={(e) => setEditJobDescription(e.target.value)}
+                    style={{
+                      ...inputStyle,
+                      minHeight: 150,
+                      resize: "vertical",
+                    }}
+                    placeholder="Paste the posting here so you can reference it later."
+                  />
+                </label>
+              </div>
+            </section>
+          ) : null}
 
           {appQ.data.job_url ? (
             <p style={{ marginTop: 10 }}>
@@ -99,7 +284,7 @@ export default function ApplicationDetailPage() {
             </p>
           ) : null}
 
-          {appQ.data.job_description ? (
+          {!isEditing && appQ.data.job_description ? (
             <section
               style={{
                 marginTop: 14,
@@ -162,7 +347,7 @@ export default function ApplicationDetailPage() {
                     note: note.trim() ? note : null,
                   })
                 }
-                disabled={!canSave}
+                disabled={!canSaveStatus}
                 style={{
                   padding: "12px 14px",
                   cursor: "pointer",
