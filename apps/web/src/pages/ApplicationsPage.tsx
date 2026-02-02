@@ -176,6 +176,7 @@ export default function ApplicationsPage() {
                 company_name: companyName,
                 role_title: roleTitle,
                 status,
+                applied_at: new Date().toISOString().slice(0, 10),
                 note: note.trim() ? note : null,
                 job_url: jobUrl.trim() ? jobUrl.trim() : null,
                 job_description: jobDescription.trim() ? jobDescription : null,
