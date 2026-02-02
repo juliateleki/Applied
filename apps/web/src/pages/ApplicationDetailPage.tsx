@@ -6,7 +6,9 @@ import {
   getApplication,
   listEvents,
   updateApplication,
+  deleteApplication,
 } from "../shared/api/client";
+
 import { STATUSES } from "../shared/constants/statuses";
 
 function formatStatusLabel(value: string) {
@@ -107,6 +109,14 @@ export default function ApplicationDetailPage() {
     },
   });
 
+  const deleteMut = useMutation({
+    mutationFn: () => deleteApplication(applicationId),
+    onSuccess: async () => {
+      await Promise.all([qc.invalidateQueries({ queryKey: ["applications"] })]);
+      window.location.href = "/";
+    },
+  });
+
   const canSaveEdit =
     !!appQ.data &&
     !editMut.isPending &&
@@ -152,6 +162,25 @@ export default function ApplicationDetailPage() {
             </div>
 
             <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => {
+                  const ok = window.confirm(
+                    "Delete this application? This cannot be undone.",
+                  );
+                  if (!ok) return;
+                  deleteMut.mutate();
+                }}
+                disabled={deleteMut.isPending}
+                style={{
+                  padding: "10px 12px",
+                  cursor: "pointer",
+                  borderRadius: 10,
+                  opacity: deleteMut.isPending ? 0.6 : 1,
+                }}
+              >
+                {deleteMut.isPending ? "Deleting…" : "Delete"}
+              </button>
+
               <button
                 onClick={() => {
                   if (!isEditing) {

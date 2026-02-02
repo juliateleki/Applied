@@ -92,3 +92,9 @@ export function changeStatus(
 export function listEvents(id: number) {
   return request<ApplicationEvent[]>(`/applications/${id}/events`);
 }
+
+export function deleteApplication(id: number) {
+  return request<{ ok: boolean }>(`/applications/${id}`, {
+    method: "DELETE",
+  });
+}

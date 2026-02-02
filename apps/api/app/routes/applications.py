@@ -180,3 +180,14 @@ def list_events(application_id: int):
             )
             for e in events
         ]
+
+@router.delete("/{application_id}")
+def delete_application(application_id: int):
+    with get_session() as db:
+        app = db.get(Application, application_id)
+        if not app:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        db.delete(app)
+        db.commit()
+        return {"ok": True}
