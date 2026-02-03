@@ -22,6 +22,8 @@ function formatStatusLabel(value: string) {
 
 const STALE_DAYS = 14;
 
+type SortMode = "newest" | "oldest" | "company_az" | "company_za";
+
 export default function ApplicationsPage() {
   const qc = useQueryClient();
   const { data, isLoading, error } = useQuery({
@@ -36,6 +38,8 @@ export default function ApplicationsPage() {
 
   const [jobUrl, setJobUrl] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+
+  const [sortMode, setSortMode] = useState<SortMode>("newest");
 
   const createMut = useMutation({
     mutationFn: createApplication,
@@ -68,6 +72,30 @@ export default function ApplicationsPage() {
 
   const staleCount = staleItems.length;
   const topStale = staleItems.slice(0, 3);
+
+  const sortedRows = useMemo(() => {
+    const rows = [...(data ?? [])];
+
+    const getTime = (iso: string) => {
+      const t = new Date(iso).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
+
+    const cmpText = (a: string, b: string) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" });
+
+    if (sortMode === "newest") {
+      rows.sort((a, b) => getTime(b.updated_at) - getTime(a.updated_at));
+    } else if (sortMode === "oldest") {
+      rows.sort((a, b) => getTime(a.updated_at) - getTime(b.updated_at));
+    } else if (sortMode === "company_az") {
+      rows.sort((a, b) => cmpText(a.company_name, b.company_name));
+    } else if (sortMode === "company_za") {
+      rows.sort((a, b) => cmpText(b.company_name, a.company_name));
+    }
+
+    return rows;
+  }, [data, sortMode]);
 
   const cardStyle = {
     padding: 16,
@@ -302,15 +330,38 @@ export default function ApplicationsPage() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Applications</h2>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: 12,
+          }}
+        >
+          <h2 style={{ margin: 0 }}>Applications</h2>
+
+          <label style={{ display: "grid", gap: 6, minWidth: 220 }}>
+            <span style={{ fontSize: 13, opacity: 0.85 }}>Sort</span>
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as SortMode)}
+              style={inputStyle}
+            >
+              <option value="newest">Newest activity</option>
+              <option value="oldest">Oldest activity</option>
+              <option value="company_az">Company A → Z</option>
+              <option value="company_za">Company Z → A</option>
+            </select>
+          </label>
+        </div>
 
         {isLoading ? <p>Loading…</p> : null}
         {error ? (
           <p style={{ color: "crimson" }}>{String((error as Error).message)}</p>
         ) : null}
 
-        <div style={{ display: "grid", gap: 10 }}>
-          {(data ?? []).map((a) => {
+        <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+          {sortedRows.map((a) => {
             const d = daysAgo(a.updated_at);
             const stale = d !== null && d >= STALE_DAYS;
 
