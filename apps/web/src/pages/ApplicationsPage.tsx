@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useMemo, useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createApplication, listApplications } from "../shared/api/client";
 import { STATUSES } from "../shared/constants/statuses";
@@ -23,6 +23,19 @@ function formatStatusLabel(value: string) {
 const STALE_DAYS = 14;
 
 type SortMode = "newest" | "oldest" | "company_az" | "company_za";
+type StatusFilter = "all" | (typeof STATUSES)[number];
+
+function isSortMode(v: string | null): v is SortMode {
+  return (
+    v === "newest" || v === "oldest" || v === "company_az" || v === "company_za"
+  );
+}
+
+function isStatusFilter(v: string | null): v is StatusFilter {
+  if (!v) return false;
+  if (v === "all") return true;
+  return (STATUSES as readonly string[]).includes(v);
+}
 
 export default function ApplicationsPage() {
   const qc = useQueryClient();
@@ -39,8 +52,41 @@ export default function ApplicationsPage() {
   const [jobUrl, setJobUrl] = useState("");
   const [jobDescription, setJobDescription] = useState("");
 
-  const [sortMode, setSortMode] = useState<SortMode>("newest");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const initialSort = useMemo<SortMode>(() => {
+    const raw = searchParams.get("sort");
+    return isSortMode(raw) ? raw : "newest";
+  }, [searchParams]);
+
+  const initialStatusFilter = useMemo<StatusFilter>(() => {
+    const raw = searchParams.get("status");
+    return isStatusFilter(raw) ? raw : "all";
+  }, [searchParams]);
+
+  const [sortMode, setSortMode] = useState<SortMode>(initialSort);
+  const [statusFilter, setStatusFilter] =
+    useState<StatusFilter>(initialStatusFilter);
+
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+
+    if (sortMode === "newest") next.delete("sort");
+    else next.set("sort", sortMode);
+
+    if (statusFilter === "all") next.delete("status");
+    else next.set("status", statusFilter);
+
+    const currSort = searchParams.get("sort");
+    const currStatus = searchParams.get("status");
+
+    const nextSort = next.get("sort");
+    const nextStatus = next.get("status");
+
+    if (currSort !== nextSort || currStatus !== nextStatus) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [sortMode, statusFilter, searchParams, setSearchParams]);
 
   const createMut = useMutation({
     mutationFn: createApplication,
@@ -355,7 +401,9 @@ export default function ApplicationsPage() {
               <span style={{ fontSize: 13, opacity: 0.85 }}>Filter status</span>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as StatusFilter)
+                }
                 style={inputStyle}
               >
                 <option value="all">All</option>
