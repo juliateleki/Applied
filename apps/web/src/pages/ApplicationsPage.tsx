@@ -132,6 +132,7 @@ export default function ApplicationsPage() {
             <input
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Firefly Aerospace"
               style={inputStyle}
             />
           </label>
@@ -141,6 +142,7 @@ export default function ApplicationsPage() {
             <input
               value={roleTitle}
               onChange={(e) => setRoleTitle(e.target.value)}
+              placeholder="Software Developer"
               style={inputStyle}
             />
           </label>
@@ -190,6 +192,7 @@ export default function ApplicationsPage() {
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
+              placeholder="Referral name, recruiter contact, follow-up date, interview notes..."
               style={{
                 ...inputStyle,
                 minHeight: 110,
