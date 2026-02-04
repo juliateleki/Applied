@@ -40,6 +40,7 @@ export default function ApplicationsPage() {
   const [jobDescription, setJobDescription] = useState("");
 
   const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const createMut = useMutation({
     mutationFn: createApplication,
@@ -73,8 +74,13 @@ export default function ApplicationsPage() {
   const staleCount = staleItems.length;
   const topStale = staleItems.slice(0, 3);
 
-  const sortedRows = useMemo(() => {
+  const visibleRows = useMemo(() => {
     const rows = [...(data ?? [])];
+
+    const filtered =
+      statusFilter === "all"
+        ? rows
+        : rows.filter((a) => a.status === statusFilter);
 
     const getTime = (iso: string) => {
       const t = new Date(iso).getTime();
@@ -85,17 +91,17 @@ export default function ApplicationsPage() {
       a.localeCompare(b, undefined, { sensitivity: "base" });
 
     if (sortMode === "newest") {
-      rows.sort((a, b) => getTime(b.updated_at) - getTime(a.updated_at));
+      filtered.sort((a, b) => getTime(b.updated_at) - getTime(a.updated_at));
     } else if (sortMode === "oldest") {
-      rows.sort((a, b) => getTime(a.updated_at) - getTime(b.updated_at));
+      filtered.sort((a, b) => getTime(a.updated_at) - getTime(b.updated_at));
     } else if (sortMode === "company_az") {
-      rows.sort((a, b) => cmpText(a.company_name, b.company_name));
+      filtered.sort((a, b) => cmpText(a.company_name, b.company_name));
     } else if (sortMode === "company_za") {
-      rows.sort((a, b) => cmpText(b.company_name, a.company_name));
+      filtered.sort((a, b) => cmpText(b.company_name, a.company_name));
     }
 
-    return rows;
-  }, [data, sortMode]);
+    return filtered;
+  }, [data, sortMode, statusFilter]);
 
   const cardStyle = {
     padding: 16,
@@ -339,23 +345,42 @@ export default function ApplicationsPage() {
             justifyContent: "space-between",
             alignItems: "baseline",
             gap: 12,
+            flexWrap: "wrap",
           }}
         >
           <h2 style={{ margin: 0 }}>Applications</h2>
 
-          <label style={{ display: "grid", gap: 6, minWidth: 220 }}>
-            <span style={{ fontSize: 13, opacity: 0.85 }}>Sort</span>
-            <select
-              value={sortMode}
-              onChange={(e) => setSortMode(e.target.value as SortMode)}
-              style={inputStyle}
-            >
-              <option value="newest">Newest activity</option>
-              <option value="oldest">Oldest activity</option>
-              <option value="company_az">Company A → Z</option>
-              <option value="company_za">Company Z → A</option>
-            </select>
-          </label>
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+            <label style={{ display: "grid", gap: 6, minWidth: 220 }}>
+              <span style={{ fontSize: 13, opacity: 0.85 }}>Filter status</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="all">All</option>
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {formatStatusLabel(s)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label style={{ display: "grid", gap: 6, minWidth: 220 }}>
+              <span style={{ fontSize: 13, opacity: 0.85 }}>Sort</span>
+              <select
+                value={sortMode}
+                onChange={(e) => setSortMode(e.target.value as SortMode)}
+                style={inputStyle}
+              >
+                <option value="newest">Newest activity</option>
+                <option value="oldest">Oldest activity</option>
+                <option value="company_az">Company A → Z</option>
+                <option value="company_za">Company Z → A</option>
+              </select>
+            </label>
+          </div>
         </div>
 
         {isLoading ? <p>Loading…</p> : null}
@@ -364,7 +389,7 @@ export default function ApplicationsPage() {
         ) : null}
 
         <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-          {sortedRows.map((a) => {
+          {visibleRows.map((a) => {
             const d = daysAgo(a.updated_at);
             const stale = d !== null && d >= STALE_DAYS;
 
