@@ -20,6 +20,51 @@ function formatStatusLabel(value: string) {
     .join(" ");
 }
 
+function statusBadgeStyle(status: string) {
+  const s = (status || "").toLowerCase();
+
+  let bg = "rgba(156, 163, 175, 0.18)";
+  let border = "rgba(156, 163, 175, 0.45)";
+  let fg = "#e5e7eb";
+
+  if (s === "offer") {
+    bg = "rgba(34, 197, 94, 0.18)";
+    border = "rgba(34, 197, 94, 0.55)";
+    fg = "#86efac";
+  } else if (s === "rejected") {
+    bg = "rgba(239, 68, 68, 0.18)";
+    border = "rgba(239, 68, 68, 0.55)";
+    fg = "#fca5a5";
+  } else if (s === "interviewing") {
+    bg = "rgba(59, 130, 246, 0.18)";
+    border = "rgba(59, 130, 246, 0.55)";
+    fg = "#93c5fd";
+  } else if (s === "withdrawn") {
+    bg = "rgba(249, 115, 22, 0.18)";
+    border = "rgba(249, 115, 22, 0.55)";
+    fg = "#fdba74";
+  } else if (s === "applied") {
+    bg = "rgba(156, 163, 175, 0.14)";
+    border = "rgba(156, 163, 175, 0.45)";
+    fg = "#d1d5db";
+  }
+
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "2px 10px",
+    borderRadius: 999,
+    border: `1px solid ${border}`,
+    background: bg,
+    color: fg,
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: 0.2,
+    lineHeight: "18px",
+    whiteSpace: "nowrap",
+  } as const;
+}
+
 const STALE_DAYS = 14;
 
 type SortMode = "newest" | "oldest" | "company_az" | "company_za";
@@ -348,8 +393,11 @@ export default function ApplicationsPage() {
                       <div style={{ fontWeight: 700 }}>
                         {a.company_name} · {a.role_title}
                       </div>
-                      <div style={{ opacity: 0.8, fontSize: 14 }}>
-                        Status: {formatStatusLabel(a.status)}
+                      <div style={{ opacity: 0.9, fontSize: 14 }}>
+                        <span style={{ opacity: 0.8 }}>Status:</span>{" "}
+                        <span style={statusBadgeStyle(a.status)}>
+                          {formatStatusLabel(a.status)}
+                        </span>
                       </div>
                     </div>
 
@@ -457,11 +505,23 @@ export default function ApplicationsPage() {
                 <div style={{ fontWeight: 700 }}>
                   {a.company_name} · {a.role_title}
                 </div>
-                <div style={{ opacity: 0.85 }}>
-                  Status: {formatStatusLabel(a.status)}
+
+                <div
+                  style={{
+                    marginTop: 6,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span style={{ opacity: 0.85, fontSize: 14 }}>Status:</span>
+                  <span style={statusBadgeStyle(a.status)}>
+                    {formatStatusLabel(a.status)}
+                  </span>
                 </div>
 
-                <div style={{ opacity: 0.75, fontSize: 14, marginTop: 4 }}>
+                <div style={{ opacity: 0.75, fontSize: 14, marginTop: 6 }}>
                   Last activity:{" "}
                   {d === null
                     ? "unknown"
