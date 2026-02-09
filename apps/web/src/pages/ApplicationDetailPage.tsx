@@ -19,6 +19,51 @@ function formatStatusLabel(value: string) {
     .join(" ");
 }
 
+function statusBadgeStyle(status: string) {
+  const s = (status || "").toLowerCase();
+
+  let bg = "rgba(156, 163, 175, 0.18)";
+  let border = "rgba(156, 163, 175, 0.45)";
+  let fg = "#e5e7eb";
+
+  if (s === "offer") {
+    bg = "rgba(34, 197, 94, 0.18)";
+    border = "rgba(34, 197, 94, 0.55)";
+    fg = "#86efac";
+  } else if (s === "rejected") {
+    bg = "rgba(239, 68, 68, 0.18)";
+    border = "rgba(239, 68, 68, 0.55)";
+    fg = "#fca5a5";
+  } else if (s === "interviewing") {
+    bg = "rgba(59, 130, 246, 0.18)";
+    border = "rgba(59, 130, 246, 0.55)";
+    fg = "#93c5fd";
+  } else if (s === "withdrawn") {
+    bg = "rgba(249, 115, 22, 0.18)";
+    border = "rgba(249, 115, 22, 0.55)";
+    fg = "#fdba74";
+  } else if (s === "applied") {
+    bg = "rgba(156, 163, 175, 0.14)";
+    border = "rgba(156, 163, 175, 0.45)";
+    fg = "#d1d5db";
+  }
+
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "2px 10px",
+    borderRadius: 999,
+    border: `1px solid ${border}`,
+    background: bg,
+    color: fg,
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: 0.2,
+    lineHeight: "18px",
+    whiteSpace: "nowrap",
+  } as const;
+}
+
 export default function ApplicationDetailPage() {
   const { id } = useParams();
   const applicationId = useMemo(() => Number(id), [id]);
@@ -156,9 +201,20 @@ export default function ApplicationDetailPage() {
                 {appQ.data.company_name} · {appQ.data.role_title}
               </h1>
 
-              <p style={{ marginTop: 0, opacity: 0.85 }}>
-                Current status: {formatStatusLabel(appQ.data.status)}
-              </p>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  marginTop: 0,
+                }}
+              >
+                <span style={{ opacity: 0.85 }}>Current status:</span>
+                <span style={statusBadgeStyle(appQ.data.status)}>
+                  {formatStatusLabel(appQ.data.status)}
+                </span>
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: 10 }}>
